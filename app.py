@@ -12,9 +12,9 @@ class YammyPizzaApp:
         self.master.title("Yammy Pizza Information")
 
         self.insert_button = tk.Button(self.master, text="Insert", command=self.insert_address)
-        self.insert_button.grid(row=0, column=0)
+        self.insert_button.grid(row=5, column=0)
 
-        self.search_label = tk.Label(self.master, text="Street")
+        self.search_label = tk.Label(self.master, text="Enter street name (Search): ")
         self.search_label.grid(row=0, column=1)
         self.search_entry = tk.Entry(self.master)
         self.search_entry.grid(row=0, column=2)
