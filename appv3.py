@@ -66,13 +66,17 @@ class RegisterPage:
 
     def get_login_page(self):
         # Redirects to login page
-        self.master.withdraw()
-        login_root = tk.Tk()     #new
-        login_root.configure(background="#38726c")
+        # self.master.destory
+        # login_root = tk.Tk()     #new
+        # login_root.configure(background="#38726c")
+        for widgets in self.master.winfo_children():
+            widgets.destroy()
+        # nw = tk.Toplevel(self.master)
+        # nw.configure(background="#38726c")
         LoginPage(
-            login_root,
+            self.master,
         )
-        login_root.mainloop()
+        # self.master.mainloop()
 
     def register(self):
         username = self.username_entry.get()
@@ -142,14 +146,17 @@ class LoginPage:
             global USER_ID
             USER_ID = result[0][0]
 
-            self.master.withdraw()
-            main_app = tk.Toplevel(self.master)
-            main_app.configure(background="#38726c")
-            app = YummyPizzaApp(
-                main_app, database="database/shop.db"
+            # nw = tk.Toplevel(self.master)
+            # nw.configure(background="#38726c")
+            for widgets in self.master.winfo_children():
+                widgets.destroy()
+            # self.master.withdraw()
+            # root = tk.Tk()
+            # root.configure(background="#38726c")
+            YummyPizzaApp(
+                self.master, database="database/shop.db"
             )  # Connecting to the next screen.
-            main_app.protocol("Login Close", app.close_app)
-            main_app.mainloop()
+            # self.master.mainloop()
         else:
             messagebox.showerror("Error", "Invalid login credentials")
 
@@ -159,54 +166,64 @@ class YummyPizzaApp:
         self.master = master
         self.master.title("Yammy Pizza Information")
 
-        self.insert_button = tk.Button(
-            self.master,
-            text="Insert",
-            command=self.insert_address,
-            highlightcolor="#38726c",
-            highlightbackground="#38726c",
+        self._pizza_size = tk.Label(self.master, text="Pizza Size:", bg="#38726c")
+        self._pizza_size.grid(row=1, column=0)
+        self._size_selected = tk.StringVar()
+        self._pizza_size_option_menu = tk.OptionMenu(
+            master, self._size_selected, *[
+                "Small (8 x 8)",
+                "Medium (10 x 10)",
+                "Large (12 x 12)"
+            ]
         )
-        self.insert_button.grid(row=6, column=0)
+        self._pizza_size_option_menu.grid(row=1, column=1)
 
-        self.search_label = tk.Label(
-            self.master, text="Enter street name (Search): ", bg="#38726c"
+        self._drink_type = tk.Label(self.master, text="Drink Type:", bg="#38726c")
+        self._drink_type.grid(row=3, column=0)
+        self._drink_type_selected = tk.StringVar()
+        self._drink_option_menu = tk.OptionMenu(
+            master, self._drink_type_selected, *[
+                "Water",
+                "Soft Drink",
+                "Juice"
+            ]
         )
-        self.search_label.grid(row=0, column=1)
-        self.search_entry = tk.Entry(self.master)
-        self.search_entry.grid(row=0, column=2)
-        self.search_button = tk.Button(
+        self._drink_option_menu.grid(row=3, column=1)
+
+        self.allergies = tk.Label(self.master, text="Allergies:", bg="#38726c")
+        self.allergies.grid(row=4, column=0)
+        self.allergies_entry = tk.Entry(self.master)
+        self.allergies_entry.grid(row=4, column=1)
+
+        self.topping_label = tk.Label(self.master, text="Toppings:", bg="#38726c")
+        self.topping_label.grid(row=2, column=0)
+        self.topping_entry = tk.Entry(self.master)
+        self.topping_entry.grid(row=2, column=1)
+        self.topping_search = tk.Button(
             self.master,
             text="Search",
-            command=self.search_address,
+            command=self.search_topping,
             highlightcolor="#38726c",
             highlightbackground="#38726c",
         )
-        self.search_button.grid(row=0, column=3)
+        self.topping_search.grid(row=2, column=2)
 
-        self.street_label = tk.Label(self.master, text="Street:", bg="#38726c")
-        self.street_label.grid(row=1, column=0)
-        self.street_entry = tk.Entry(self.master)
-        self.street_entry.grid(row=1, column=1)
-
-        self.city_label = tk.Label(self.master, text="City:", bg="#38726c")
-        self.city_label.grid(row=2, column=0)
-        self.city_entry = tk.Entry(self.master)
-        self.city_entry.grid(row=2, column=1)
-
-        self.state_label = tk.Label(self.master, text="State:", bg="#38726c")
-        self.state_label.grid(row=3, column=0)
-        self.state_entry = tk.Entry(self.master)
-        self.state_entry.grid(row=3, column=1)
-
-        self.zipcode_label = tk.Label(self.master, text="Zip Code:", bg="#38726c")
-        self.zipcode_label.grid(row=4, column=0)
-        self.zipcode_entry = tk.Entry(self.master)
-        self.zipcode_entry.grid(row=4, column=1)
-
-        self.created_by_user = tk.Label(self.master, text="Created By", bg="#38726c")
-        self.created_by_user.grid(row=5, column=0)
-        self.created_by_user_entry = tk.Entry(self.master, state="disabled")
-        self.created_by_user_entry.grid(row=5, column=1)
+        self.order_button = tk.Button(
+            self.master,
+            text="Insert",
+            command=self.insert_order,
+            highlightcolor="#38726c",
+            highlightbackground="#38726c",
+        )
+        self.order_button.grid(row=6, column=0)
+        self.fetch_button = tk.Button(
+            self.master,
+            text="Display Order",
+            command=self.fetch_and_display_order,
+            highlightcolor="#38726c",
+            highlightbackground="#38726c",
+        )
+        self.fetch_button.grid(row=6, column=2)
 
         self.update_button = tk.Button(
             self.master,
@@ -217,119 +234,139 @@ class YummyPizzaApp:
         )
         self.update_button.grid(row=6, column=1)
 
-        self.fetch_button = tk.Button(
-            self.master,
-            text="Fetch & Display",
-            command=self.fetch_and_display_address,
-            highlightcolor="#38726c",
-            highlightbackground="#38726c",
-        )
-        self.fetch_button.grid(row=6, column=2)
-
         self._connector = SQLiteConnector(database=database)
+        self._current_order_id = None
+        self.create_toppings_table()
+        self.create_orders_table()
 
-    def create_table(self):
+    def create_toppings_table(self):
+        try:
+            query = """
+                DROP TABLE topping_types
+            """
+            self._connector.execute_insert_query(query)
+        except:
+            pass
+
         query = """
-            CREATE TABLE IF NOT EXISTS "address" (
-	            "street"	TEXT,
-	            "city"	TEXT,
-	            "state"	TEXT,
-	            "zip"	TEXT,
-	            "id"	INTEGER NOT NULL UNIQUE,
-	            "created_by"	INTEGER,
-	            PRIMARY KEY("id" AUTOINCREMENT)
+            CREATE TABLE IF NOT EXISTS "topping_types" (
+                "topping_name" Text,
+                "id" INTEGER NOT NULL UNIQUE,
+                PRIMARY KEY("id" AUTOINCREMENT)
+            );
+        """
+        self._connector.execute_insert_query(query)
+        insert_query = """
+            INSERT INTO topping_types(topping_name)
+            VALUES (?)
+        """
+        for v in [
+                "fresh garlic",
+                "sweet chilli flakes",
+                "peri peri",
+                "sweet peri peri",
+                "Extra cheese",
+                "black olives",
+                "green peppers",
+                "supreme pepperoni",
+                "garlic butter"
+
+            ]:
+            self._connector.execute_insert_query(
+                insert_query, (v,)
+            )
+
+    def create_orders_table(self):
+        query = """
+            CREATE TABLE IF NOT EXISTS "orders" (
+                "pizza_size"	TEXT,
+                "topping"	TEXT,
+                "drinks"	TEXT,
+                "allergies"	TEXT,
+                "id"	INTEGER NOT NULL UNIQUE,
+                "ordered_by"	INTEGER,
+                PRIMARY KEY("id" AUTOINCREMENT)
             );
         """
         self._connector.execute_insert_query(query)
 
-    def insert_address(self):
-        street = self.street_entry.get()
-        city = self.city_entry.get()
-        state = self.state_entry.get()
-        zipcode = self.zipcode_entry.get()
+    def insert_order(self):
+        pizza_size = self._size_selected.get()
+        topping = self.topping_entry.get()
+        drinks = self._drink_type_selected.get()
+        allergies = self.allergies_entry.get()
 
         try:
             # Get currently logged in user stored in the variable
             global USER_ID
-            self._connector.execute_insert_query(
-                "INSERT INTO address (STREET, CITY, STATE, ZIP, created_by) VALUES (?, ?, ?, ?, ?)",
-                (street, city, state, zipcode, USER_ID),
+            result = self._connector.execute_insert_query(
+                "INSERT INTO orders (pizza_size, topping, drinks, allergies, ordered_by) VALUES (?, ?, ?, ?, ?) RETURNING id;",
+                (pizza_size, topping, drinks, allergies, USER_ID),
             )
+            self._current_order_id = result[0]
             messagebox.showinfo("Success", "Address inserted successfully!")
 
         except Exception as e:
             messagebox.showerror("Error", str(e))
 
-    def search_address(self):
-        street = self.search_entry.get()
+    def search_topping(self):
+        street = self.topping_entry.get()
         try:
             result = self._connector.execute_fetch_query(
                 """
-                    SELECT STREET, CITY, STATE, ZIP, u.username FROM address
-                    INNER JOIN users AS u ON u.id = CREATED_BY
-                    WHERE street like ?
+                    SELECT topping_name FROM topping_types
+                    WHERE topping_name like ?
                 """,
                 ("%" + street + "%",),   # Pattern match
             )
 
             if result:
-                result = result[0]
-                self.created_by_user_entry.config(state="normal")  # to disable change the state
-                self.street_entry.delete(0, tk.END)                # delete the current
-                self.street_entry.insert(tk.END, result[0])        # insterts whats in the database
-                self.city_entry.delete(0, tk.END)
-                self.city_entry.insert(tk.END, result[1])
-                self.state_entry.delete(0, tk.END)
-                self.state_entry.insert(tk.END, result[2])
-                self.zipcode_entry.delete(0, tk.END)
-                self.zipcode_entry.insert(tk.END, result[3])
-                self.created_by_user_entry.delete(0, tk.END)
-                self.created_by_user_entry.insert(tk.END, result[4])
-                self.created_by_user_entry.config(state="disabled")
+                result = result[0]  # to disable change the state
+                self.topping_entry.delete(0, tk.END)
+                self.topping_entry.insert(tk.END, result[0])
             else:
-                messagebox.showerror("Error", "No record found for street: " + street)
+                messagebox.showerror("Error", "No record found for toppings: " + street)
 
         except Exception as e:
             messagebox.showerror("Error", str(e))
 
     def update_address(self):
-        street = self.street_entry.get()
-        city = self.city_entry.get()
-        state = self.state_entry.get()
-        zipcode = self.zipcode_entry.get()
+        pizza_size = self._size_selected.get()
+        topping = self.topping_entry.get()
+        drinks = self._drink_type_selected.get()
+        allergies = self.allergies_entry.get()
 
         try:
             global USER_ID
             self._connector.execute_insert_query(
-                "UPDATE address SET STREET=?, CITY=?, STATE=?, ZIP=? WHERE street=?",
-                (street, city, state, zipcode, street),
+                "UPDATE orders SET pizza_size=?, topping=?, drinks=?, allergies=? WHERE id=?",
+                (pizza_size, topping, drinks, allergies, self._current_order_id),
             )
-            messagebox.showinfo("Success", "Address updated successfully!")
+            messagebox.showinfo("Success", "Order updated successfully!")
 
         except Exception as e:
             messagebox.showerror("Error", str(e))
 
-    def fetch_and_display_address(self):
-        street = self.street_entry.get()
+    def fetch_and_display_order(self):
         try:
             result = self._connector.execute_fetch_query(
                 """
-                    SELECT STREET, CITY, STATE, ZIP, u.USERNAME FROM address
+                    SELECT pizza_size, topping, drinks, allergies, u.USERNAME FROM orders
                     INNER JOIN users AS u
-                    ON u.id == created_by
-                    WHERE street=?
+                    ON u.id == ordered_by
+                    WHERE orders.id=?
                 """,
-                (street,),
+                (self._current_order_id,),
             )
 
             if result:
                 result = result[0]
                 display_window = tk.Toplevel(self.master)
-                display_window.title("Updated Address")
+                display_window.title("Order Address")
 
                 address_label = tk.Label(
                     display_window,
-                    text=f"Address: {result[0]}, {result[1]}, {result[2]} {result[3]}, Created By: {result[4]}",
+                    text=f"Pizza Size: {result[0]}, Topping:{result[1]}, Drinks: {result[2]}, Allergies: {result[3]}, Ordered By: {result[4]}",
                 )
                 address_label.pack()
 
@@ -338,7 +375,7 @@ class YummyPizzaApp:
                 )
                 close_button.pack()
             else:
-                messagebox.showerror("Error", "No record found for street: " + street)
+                messagebox.showerror("Error", "No record found for order_id: " + self._current_order_id)
 
         except Exception as e:
             messagebox.showerror("Error", str(e))
@@ -348,7 +385,17 @@ class YummyPizzaApp:
 
 
 if __name__ == "__main__":
+    # register_root = tk.Tk()
+    #
+    # register_root.configure(background="#38726c")
+    #
+    # register_app = YummyPizzaApp(
+    #     register_root, database="database/shop.db"
+    # )
+    # register_root.mainloop()
+
     register_root = tk.Tk()
+    register_root.update()
 
     register_root.configure(background="#38726c")
 

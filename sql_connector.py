@@ -2,7 +2,7 @@ import sqlite3 as sqlite
 from contextlib import contextmanager
 
 
-class SQLiteConnector:
+class SQLiteConnector:              # helper class used to self manage
     def __init__(
         self,
         database,
@@ -24,8 +24,10 @@ class SQLiteConnector:
         with self._get_connection() as connection:
             cursor = connection.cursor()
             cursor.execute(query, parms)
+            result = cursor.fetchone()
             cursor.close()
             connection.commit()
+            return result
 
     def execute_fetch_query(self, query, parms=()):
         # Helper functon to fetch data from database
