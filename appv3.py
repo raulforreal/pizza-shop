@@ -1,11 +1,9 @@
-# import MySQLdb
-import time
 import tkinter as tk
 from tkinter import messagebox
 
 from sql_connector import SQLiteConnector
 
-# A global variable to store and retrieve logged in users.
+# A global variable to store and retrieve logged-in users.
 USER_ID = None
 
 
@@ -66,19 +64,15 @@ class RegisterPage:
 
     def get_login_page(self):
         # Redirects to login page
-        # self.master.destory
-        # login_root = tk.Tk()     #new
-        # login_root.configure(background="#38726c")
         for widgets in self.master.winfo_children():
-            widgets.destroy()
-        # nw = tk.Toplevel(self.master)
-        # nw.configure(background="#38726c")
+            widgets.destroy()  # Deletes existing components i.e. labels, text box, buttons etc. on current page
+
         LoginPage(
             self.master,
         )
-        # self.master.mainloop()
 
     def register(self):
+        # Code executes when register button is clicked
         username = self.username_entry.get()
         password = self.password_entry.get()
         password_re_entry = self.password_re_entry.get()
@@ -88,7 +82,8 @@ class RegisterPage:
             return
 
         self._db_connector.execute_insert_query(
-            "INSERT INTO USERS(username, password) VALUES(?, ?)", (username, password)  #into db
+            "INSERT INTO USERS(username, password) VALUES(?, ?)",
+            (username, password),  # into db
         )
 
         self.get_login_page()
@@ -125,15 +120,16 @@ class LoginPage:
     def create_table(self):
         create_table_query = """
             CREATE TABLE IF NOT EXISTS "users" (
-	            "id"	INTEGER UNIQUE,
-	            "username"	VARCHAR(255) NOT NULL,
-	            "password"	VARCHAR(255) NOT NULL,
-	            PRIMARY KEY("id" AUTOINCREMENT)
+                "id"	INTEGER UNIQUE,
+                "username"	VARCHAR(255) NOT NULL,
+                "password"	VARCHAR(255) NOT NULL,
+                PRIMARY KEY("id" AUTOINCREMENT)
             );
         """
         self._db_connector.execute_insert_query(create_table_query)
 
     def login(self):
+        # This code is executed when login button is clicked
         username = self.username_entry.get()
         password = self.password_entry.get()
 
@@ -146,19 +142,82 @@ class LoginPage:
             global USER_ID
             USER_ID = result[0][0]
 
-            # nw = tk.Toplevel(self.master)
-            # nw.configure(background="#38726c")
             for widgets in self.master.winfo_children():
-                widgets.destroy()
-            # self.master.withdraw()
-            # root = tk.Tk()
-            # root.configure(background="#38726c")
-            YummyPizzaApp(
+                widgets.destroy()  # Destroys components on current page i.e. text box, labels, buttons etc.
+
+            ViewHomePage(
                 self.master, database="database/shop.db"
             )  # Connecting to the next screen.
-            # self.master.mainloop()
         else:
             messagebox.showerror("Error", "Invalid login credentials")
+
+
+class ViewHomePage:
+    def __init__(self, master, database):
+        self._master = master
+        self._master.title("Yammy Pizza Home")
+        self._connector = SQLiteConnector(database=database)
+        self.retrieve_order()
+
+    def retrieve_order(self):
+        for widgets in self._master.winfo_children():
+            widgets.destroy()
+        query = """
+            SELECT id, pizza_size, topping, drinks, allergies
+            FROM orders
+            where ordered_by = ?
+        """
+        results = self._connector.execute_fetch_query(query, (USER_ID,))
+
+        i = 0
+
+        if not results:
+            label = tk.Label(
+                self._master,
+                text="No orders have been placed",
+                bg="#38726c",
+                font="Arial 13 bold",
+            )
+            label.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
+        else:
+            for i, result in enumerate(results):
+                label = tk.Label(
+                    self._master,
+                    text=f"Pizza Size: {result[1]}, Topping:{result[2]}, Drinks: {result[3]}, Allergies: {result[4]}",
+                    bg="#38726c",
+                )
+                label.grid(row=i + 1, column=1)
+                delete_button = tk.Button(
+                    self._master,
+                    text="Delete Order",
+                    command=lambda: self.delete_entry(result[0]),
+                    highlightcolor="#38726c",
+                    highlightbackground="#38726c",
+                )
+                delete_button.grid(row=i + 1, column=2)
+
+        new_order_button = tk.Button(
+            self._master,
+            text="Create new order",
+            command=self._new_order,
+            highlightcolor="#38726c",
+            highlightbackground="#38726c",
+        )
+        new_order_button.grid(row=i + 2, column=1)
+
+    def _new_order(self):
+        for widgets in self._master.winfo_children():
+            widgets.destroy()
+        YummyPizzaApp(self._master, database="database/shop.db")
+
+    def delete_entry(self, id):
+        query = """
+            delete from orders
+            where id = ?
+        """
+        self._connector.execute_insert_query(query, (id,))
+        messagebox.showinfo(message=f"Order with ID: {id} deleted")
+        self.retrieve_order()
 
 
 class YummyPizzaApp:
@@ -170,11 +229,9 @@ class YummyPizzaApp:
         self._pizza_size.grid(row=1, column=0)
         self._size_selected = tk.StringVar()
         self._pizza_size_option_menu = tk.OptionMenu(
-            master, self._size_selected, *[
-                "Small (8 x 8)",
-                "Medium (10 x 10)",
-                "Large (12 x 12)"
-            ]
+            master,
+            self._size_selected,
+            *["Small (8 x 8)", "Medium (10 x 10)", "Large (12 x 12)"],
         )
         self._pizza_size_option_menu.grid(row=1, column=1)
 
@@ -182,11 +239,7 @@ class YummyPizzaApp:
         self._drink_type.grid(row=3, column=0)
         self._drink_type_selected = tk.StringVar()
         self._drink_option_menu = tk.OptionMenu(
-            master, self._drink_type_selected, *[
-                "Water",
-                "Soft Drink",
-                "Juice"
-            ]
+            master, self._drink_type_selected, *["Water", "Soft Drink", "Juice"]
         )
         self._drink_option_menu.grid(row=3, column=1)
 
@@ -228,11 +281,20 @@ class YummyPizzaApp:
         self.update_button = tk.Button(
             self.master,
             text="Update",
-            command=self.update_address,
+            command=self.update_order,
             highlightcolor="#38726c",
             highlightbackground="#38726c",
         )
         self.update_button.grid(row=6, column=1)
+
+        self.home_button = tk.Button(
+            self.master,
+            text="Orders page",
+            command=self.return_home_page,
+            highlightcolor="#38726c",
+            highlightbackground="#38726c",
+        )
+        self.home_button.grid(row=6, column=3)
 
         self._connector = SQLiteConnector(database=database)
         self._current_order_id = None
@@ -261,20 +323,17 @@ class YummyPizzaApp:
             VALUES (?)
         """
         for v in [
-                "fresh garlic",
-                "sweet chilli flakes",
-                "peri peri",
-                "sweet peri peri",
-                "Extra cheese",
-                "black olives",
-                "green peppers",
-                "supreme pepperoni",
-                "garlic butter"
-
-            ]:
-            self._connector.execute_insert_query(
-                insert_query, (v,)
-            )
+            "fresh garlic",
+            "sweet chilli flakes",
+            "peri peri",
+            "sweet peri peri",
+            "Extra cheese",
+            "black olives",
+            "green peppers",
+            "supreme pepperoni",
+            "garlic butter",
+        ]:
+            self._connector.execute_insert_query(insert_query, (v,))
 
     def create_orders_table(self):
         query = """
@@ -297,10 +356,13 @@ class YummyPizzaApp:
         allergies = self.allergies_entry.get()
 
         try:
-            # Get currently logged in user stored in the variable
+            # Get currently logged-in user stored in the variable
             global USER_ID
             result = self._connector.execute_insert_query(
-                "INSERT INTO orders (pizza_size, topping, drinks, allergies, ordered_by) VALUES (?, ?, ?, ?, ?) RETURNING id;",
+                """INSERT INTO 
+                    orders (pizza_size, topping, drinks, allergies, ordered_by)
+                    VALUES (?, ?, ?, ?, ?) RETURNING id;
+                """,
                 (pizza_size, topping, drinks, allergies, USER_ID),
             )
             self._current_order_id = result[0]
@@ -310,14 +372,14 @@ class YummyPizzaApp:
             messagebox.showerror("Error", str(e))
 
     def search_topping(self):
-        street = self.topping_entry.get()
+        topping = self.topping_entry.get()
         try:
             result = self._connector.execute_fetch_query(
                 """
                     SELECT topping_name FROM topping_types
                     WHERE topping_name like ?
                 """,
-                ("%" + street + "%",),   # Pattern match
+                ("%" + topping + "%",),  # Pattern match
             )
 
             if result:
@@ -325,12 +387,12 @@ class YummyPizzaApp:
                 self.topping_entry.delete(0, tk.END)
                 self.topping_entry.insert(tk.END, result[0])
             else:
-                messagebox.showerror("Error", "No record found for toppings: " + street)
+                messagebox.showerror("Error", "No record found for toppings: " + topping)
 
         except Exception as e:
             messagebox.showerror("Error", str(e))
 
-    def update_address(self):
+    def update_order(self):
         pizza_size = self._size_selected.get()
         topping = self.topping_entry.get()
         drinks = self._drink_type_selected.get()
@@ -341,6 +403,7 @@ class YummyPizzaApp:
             self._connector.execute_insert_query(
                 "UPDATE orders SET pizza_size=?, topping=?, drinks=?, allergies=? WHERE id=?",
                 (pizza_size, topping, drinks, allergies, self._current_order_id),
+                # Order id for previously inserted order is used to update that order
             )
             messagebox.showinfo("Success", "Order updated successfully!")
 
@@ -375,24 +438,27 @@ class YummyPizzaApp:
                 )
                 close_button.pack()
             else:
-                messagebox.showerror("Error", "No record found for order_id: " + self._current_order_id)
+                messagebox.showerror(
+                    "Error", "No record found for order_id: " + self._current_order_id
+                )
+        except Exception:
+            messagebox.showerror("Error", "No order has been created")
 
-        except Exception as e:
-            messagebox.showerror("Error", str(e))
+    def return_home_page(self):
+        for widgets in self.master.winfo_children():
+            widgets.destroy()
+        # self.master.withdraw()
+        # root = tk.Tk()
+        # root.configure(background="#38726c")
+        ViewHomePage(
+            self.master, database="database/shop.db"
+        )  # Connecting to the next screen.
 
     def close_app(self):
         self.master.quit()
 
 
 if __name__ == "__main__":
-    # register_root = tk.Tk()
-    #
-    # register_root.configure(background="#38726c")
-    #
-    # register_app = YummyPizzaApp(
-    #     register_root, database="database/shop.db"
-    # )
-    # register_root.mainloop()
 
     register_root = tk.Tk()
     register_root.update()
