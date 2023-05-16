@@ -447,9 +447,7 @@ class YummyPizzaApp:
     def return_home_page(self):
         for widgets in self.master.winfo_children():
             widgets.destroy()
-        # self.master.withdraw()
-        # root = tk.Tk()
-        # root.configure(background="#38726c")
+
         ViewHomePage(
             self.master, database="database/shop.db"
         )  # Connecting to the next screen.
