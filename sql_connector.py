@@ -1,46 +1,39 @@
-from typing import Optional, Dict
-
 import sqlite3 as sqlite
 from contextlib import contextmanager
 
 
-class SQLiteConnector:
-
+class SQLiteConnector:              # helper class used to self manage
     def __init__(
         self,
-        database: str,
+        database,
     ):
         self._database = database
 
     @contextmanager
     def _get_connection(self):
-        connection = sqlite.connect(
-            self._database
-        )
+        # Context manager helps manage and automatically close database connection
+        # once connection goes out of context of with clause
+        connection = sqlite.connect(self._database)
         try:
             yield connection
         finally:
-            connection.commit()
             connection.close()
 
-    def execute_insert_query(
-        self, query: str, parms: Optional[Dict[str, str]] = {}
-    ):
+    def execute_insert_query(self, query, parms=()):
+        # Helper function to insert or manipulate database objects
         with self._get_connection() as connection:
-            currsor = connection.cursor()
-            currsor.execute(
-                query, parms
-            )
-            currsor.close()
+            cursor = connection.cursor()
+            cursor.execute(query, parms)
+            result = cursor.fetchone()
+            cursor.close()
+            connection.commit()
+            return result
 
-    def execute_fetch_query(
-        self, query: str, parms: Optional[Dict[str, str]] = {}
-    ):
+    def execute_fetch_query(self, query, parms=()):
+        # Helper functon to fetch data from database
         with self._get_connection() as connection:
-            currsor = connection.cursor()
-            currsor.execute(
-                query, parms
-            )
-            records = currsor.fetchall()
-            currsor.close()
+            cursor = connection.cursor()
+            cursor.execute(query, parms)
+            records = cursor.fetchall()
+            cursor.close()
             return records
