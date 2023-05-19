@@ -2,7 +2,7 @@
 
 ## Requirements
 
-* Python version 3.9 + (Tested on 3.11.2)
+* Python version 3.9+ (Tested on 3.11.2)
 * Database: SQLite [database/shop.db](database/shop.db)
 
 ## Guide on running the app
